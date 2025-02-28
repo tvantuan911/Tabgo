@@ -23,35 +23,65 @@ function TabSwitch(selector) {
 
     if (this.panels.length !== this.tabs.length) return;
 
+    this._originalHTML = this.container.innerHTML;
+
     this._init();
 }
 
 Tabswitch.prototype._init = function() {
-    const tabActive = this.tabs[0];
-    tabActive.closest('li').classList.add('tabswitch--active');
-
-    this.panels.forEach(panel => panel.hidden = true);
+    this._activateTab(this.tabs[0]);
 
     this.tabs.forEach(tab => {
         tab.onclick = (event) => this._handleTabClick(event, tab);
-    })
+    });
     
-    const panelActive = this.panels[0];
-    panelActive.hidden = false;
 }
 
 
-Tabswitch.prototype._handleTabClick = function(event) {
+Tabswitch.prototype._handleTabClick = function(event, tab) {
     event.preventDefault();
-    this.tabs.forEach(tab => {
-        tab.closest('li').classList.remove('tabswitch--active');
+    this._activateTab(tab);
+}
+
+Tabswitch.prototype._activateTab = function (tab) {
+    this.tabs.forEach((tab) => {
+        tab.closest("li").classList.remove("tabswitch--active");
     });
 
-    tab.closest('li').classList.add('tabswitch--active');
+    tab.closest("li").classList.add("tabswitch--active");
 
-    this.panels.forEach(panel => (panel.hidden = true));
+    this.panels.forEach((panel) => (panel.hidden = true));
     const panelActive = document.querySelector(tab.getAttribute("href"));
     panelActive.hidden = false;
 }
 
+Tabswitch.prototype.switch = function (input) {
+    let tabToActivate = null;
+
+    if (typeof input === 'string') {
+        tabToActivate = this.tabs.find(tab => tab.getAttribute('href') === input);
+        if (!tabToActivate) {
+            console.error(`Tabswitch: No panel found with ID '${input}'`);
+            return;
+        }
+    } else if (this.tabs.includes(input)) {
+        tabToActivate = input;
+    }
+
+    if (!tabToActivate) {
+        console.error(`Tabswitch: Invalid input '${input}'`);
+        return;
+    }
+
+    this._activateTab(tabToActivate);
+}
+
+Tabswitch.prototype.destroy = function () {
+    this.container.innerHTML = this._originalHTML;
+
+    this.panels.forEach(panel => panel.hidden = false);
+    this.container = null;
+    this.tabs = null;
+    this.panels = null;
+}
 
