@@ -33,7 +33,9 @@
     <div id="tab3">Tab3 content</div>
 
     <script src="./src/tabswitch.js">
-        const tabs = new TabSwitch("#tabs");
+        const tabs = new TabSwitch("#tabs", {
+            remember: true,
+        });
 
         // tabs.toggle("#tab3");
         // tabs.destroy();
