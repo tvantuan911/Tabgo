@@ -34,6 +34,7 @@ function TabSwitch(selector, options = {}) {
         options
     );
 
+    this.paramKey = selector.replace(/[^a-zA-Z0-9]/g, "");
     this._originalHTML = this.container.innerHTML;
 
     this._init();
@@ -42,11 +43,15 @@ function TabSwitch(selector, options = {}) {
 TabSwitch.prototype._init = function () {
     // const hash = location.hash;
     const params = new URLSearchParams(location.search);
-    const tabSelector = params.get('tab');
+    const tabSelector = params.get(this.paramKey );
     const tab =
         (this.opt.remember &&
             tabSelector &&
-            this.tabs.find((tab) => tab.getAttribute("href") === tabSelector)) ||
+            this.tabs.find(
+                (tab) =>
+                    tab.getAttribute("href").replace(/[^a-zA-Z0-9]/g, "") ===
+                    tabSelector
+            )) ||
         this.tabs[0];
 
     this._activateTab(tab);
@@ -75,8 +80,10 @@ TabSwitch.prototype._activateTab = function (tab) {
     panelActive.hidden = false;
 
     if (this.opt.remember) {
-        // history.replaceState(null, null, tab.getAttribute("href"));
-        history.replaceState(null, null, `?tab=${encodeURIComponent(tab.getAttribute('href'))}`);
+        const params = new URLSearchParams(location.search);
+        const paramValue = tab.getAttribute('href').replace(/[^a-zA-Z0-9]/g, "");
+        params.set(this.paramKey, paramValue);
+        history.replaceState(null, null, `?${params}`);
     }
 };
 
