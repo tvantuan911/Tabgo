@@ -1,7 +1,9 @@
 function TabSwitch(selector, options = {}) {
     this.container = document.querySelector(selector);
     if (!this.container) {
-        console.error(`TabSwitch: No container found for selector '${selector}'`);
+        console.error(
+            `TabSwitch: No container found for selector '${selector}'`
+        );
         return;
     }
 
@@ -11,7 +13,28 @@ function TabSwitch(selector, options = {}) {
         return;
     }
 
-    this.panels = this.tabs
+    this.panels = this.getPanels();
+
+    if (this.tabs.length !== this.panels.length) return;
+
+    this.opt = Object.assign(
+        {
+            activeClassName: "tabswitch--active",
+            remember: false,
+            onChange: null,
+        },
+        options
+    );
+
+    this._cleanRegex = /[^a-zA-Z0-9]/g;
+    this.paramKey = selector.replace(this._cleanRegex, "");
+    this._originalHTML = this.container.innerHTML;
+
+    this._init();
+}
+
+TabSwitch.prototype.getPanels = function () {
+    return this.tabs
         .map((tab) => {
             const panel = document.querySelector(tab.getAttribute("href"));
             if (!panel) {
@@ -24,48 +47,31 @@ function TabSwitch(selector, options = {}) {
             return panel;
         })
         .filter(Boolean);
-
-    if (this.tabs.length !== this.panels.length) return;
-
-    this.opt = Object.assign(
-        {
-            remember: false,
-            onChange: null,
-        },
-        options
-    );
-
-    this.paramKey = selector.replace(/[^a-zA-Z0-9]/g, "");
-    this._originalHTML = this.container.innerHTML;
-
-    this._init();
-}
+};
 
 TabSwitch.prototype._init = function () {
     // const hash = location.hash;
     const params = new URLSearchParams(location.search);
-    const tabSelector = params.get(this.paramKey );
+    const tabSelector = params.get(this.paramKey);
     const tab =
         (this.opt.remember &&
             tabSelector &&
             this.tabs.find(
                 (tab) =>
-                    tab.getAttribute("href").replace(/[^a-zA-Z0-9]/g, "") ===
+                    tab.getAttribute("href").replace(this._cleanRegex, "") ===
                     tabSelector
             )) ||
         this.tabs[0];
-        
+
     this.currentTab = tab;
     this._activateTab(tab, false);
 
     this.tabs.forEach((tab) => {
-        tab.onclick = (event) => this._handleTabClick(event, tab);
+        tab.onclick = (event) => {
+            event.preventDefault();
+            this._tryActivateTab(tab);
+        };
     });
-};
-
-TabSwitch.prototype._handleTabClick = function (event, tab) {
-    event.preventDefault();
-    this._tryActivateTab(tab);
 };
 
 TabSwitch.prototype.tryActivateTab = function (tab) {
@@ -73,14 +79,14 @@ TabSwitch.prototype.tryActivateTab = function (tab) {
         this._activateTab(tab);
         this.currentTab = tab;
     }
-}
+};
 
 TabSwitch.prototype._activateTab = function (tab, triggerOnChange = true) {
     this.tabs.forEach((tab) => {
-        tab.closest("li").classList.remove("tabswitch--active");
+        tab.closest("li").classList.remove(this.opt.activeClassName);
     });
 
-    tab.closest("li").classList.add("tabswitch--active");
+    tab.closest("li").classList.add(this.opt.activeClassName);
 
     this.panels.forEach((panel) => (panel.hidden = true));
 
@@ -89,40 +95,35 @@ TabSwitch.prototype._activateTab = function (tab, triggerOnChange = true) {
 
     if (this.opt.remember) {
         const params = new URLSearchParams(location.search);
-        const paramValue = tab.getAttribute('href').replace(/[^a-zA-Z0-9]/g, "");
+        const paramValue = tab
+            .getAttribute("href")
+            .replace(this._cleanRegex, "");
         params.set(this.paramKey, paramValue);
         history.replaceState(null, null, `?${params}`);
     }
 
-    if (triggerOnChange && typeof this.opt.onChange === 'function') {
+    if (triggerOnChange && typeof this.opt.onChange === "function") {
         this.opt.onChange({
             tab: tab,
             panel: panelActive,
-        })
+        });
     }
 };
 
 TabSwitch.prototype.switch = function (input) {
-    let tabToActivate = null;
+    const tab =
+        typeof input === "string"
+            ? this.tabs.find((tab) => tab.getAttribute("href") === input)
+            : this.tabs.includes(input)
+            ? input
+            : null;
 
-    if (typeof input === "string") {
-        tabToActivate = this.tabs.find(
-            (tab) => tab.getAttribute("href") === input
-        );
-        if (!tabToActivate) {
-            console.error(`TabSwitch: No panel found with ID '${input}'`);
-            return;
-        }
-    } else if (this.tabs.includes(input)) {
-        tabToActivate = input;
-    }
-
-    if (!tabToActivate) {
+    if (!tab) {
         console.error(`TabSwitch: Invalid input '${input}'`);
         return;
     }
 
-    this._tryActivateTab(tabToActivate);
+    this._tryActivateTab(tab);
 };
 
 TabSwitch.prototype.destroy = function () {
