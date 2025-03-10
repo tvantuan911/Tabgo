@@ -1,13 +1,13 @@
-function Tabzy(selector, options = {}) {
+function Tabgo(selector, options = {}) {
     this.container = document.querySelector(selector);
     if (!this.container) {
-        console.error(`Tabzy: No container found for selector '${selector}'`);
+        console.error(`Tabgo: No container found for selector '${selector}'`);
         return;
     }
 
     this.tabs = Array.from(this.container.querySelectorAll("li a"));
     if (!this.tabs.length) {
-        console.error(`Tabzy: No tabs found inside the container`);
+        console.error(`Tabgo: No tabs found inside the container`);
         return;
     }
     this.panels = this.getPanels();
@@ -16,7 +16,7 @@ function Tabzy(selector, options = {}) {
 
     this.opt = Object.assign(
         {
-            activeClassName: "tabzy--active",
+            activeClassName: "tabgo--active",
             remember: false,
             onChange: null,
         },
@@ -30,13 +30,13 @@ function Tabzy(selector, options = {}) {
     this._init();
 }
 
-Tabzy.prototype.getPanels = function () {
+Tabgo.prototype.getPanels = function () {
     return this.tabs
         .map((tab) => {
             const panel = document.querySelector(tab.getAttribute("href"));
             if (!panel) {
                 console.error(
-                    `Tabzy: No panel found for selector '${tab.getAttribute(
+                    `Tabgo: No panel found for selector '${tab.getAttribute(
                         "href"
                     )}'`
                 );
@@ -46,7 +46,7 @@ Tabzy.prototype.getPanels = function () {
         .filter(Boolean);
 };
 
-Tabzy.prototype._init = function () {
+Tabgo.prototype._init = function () {
     const params = new URLSearchParams(location.search);
     const tabSelector = params.get(this.paramKey);
     const tab =
@@ -70,14 +70,14 @@ Tabzy.prototype._init = function () {
     });
 };
 
-Tabzy.prototype._tryActivateTab = function (tab) {
+Tabgo.prototype._tryActivateTab = function (tab) {
     if (this.currentTab !== tab) {
         this.currentTab = tab;
         this._activateTab(tab);
     }
 };
 
-Tabzy.prototype._activateTab = function (tab, triggerOnChange = true, updateURL = this.opt.remember) {
+Tabgo.prototype._activateTab = function (tab, triggerOnChange = true, updateURL = this.opt.remember) {
     this.tabs.forEach((tab) => {
         tab.closest("li").classList.remove(this.opt.activeClassName);
     });
@@ -106,7 +106,7 @@ Tabzy.prototype._activateTab = function (tab, triggerOnChange = true, updateURL 
     }
 };
 
-Tabzy.prototype.switch = function (input) {
+Tabgo.prototype.switch = function (input) {
     const tab =
         typeof input === "string"
             ? this.tabs.find((tab) => tab.getAttribute("href") === input)
@@ -115,13 +115,13 @@ Tabzy.prototype.switch = function (input) {
             : null;
 
     if (!tab) {
-        console.error(`Tabzy: Invalid input '${input}'`);
+        console.error(`Tabgo: Invalid input '${input}'`);
         return;
     }
     this._tryActivateTab(tab);
 };
 
-Tabzy.prototype.destroy = function () {
+Tabgo.prototype.destroy = function () {
     this.container.innerHTML = this._originalHTML;
     this.panels.forEach((panel) => (panel.hidden = false));
     this.container = null;
