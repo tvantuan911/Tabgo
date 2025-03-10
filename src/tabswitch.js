@@ -1,25 +1,22 @@
-function TabSwitch(selector, options = {}) {
+function Tabzy(selector, options = {}) {
     this.container = document.querySelector(selector);
     if (!this.container) {
-        console.error(
-            `TabSwitch: No container found for selector '${selector}'`
-        );
+        console.error(`Tabzy: No container found for selector '${selector}'`);
         return;
     }
 
     this.tabs = Array.from(this.container.querySelectorAll("li a"));
     if (!this.tabs.length) {
-        console.error(`TabSwitch: No tabs found inside the container`);
+        console.error(`Tabzy: No tabs found inside the container`);
         return;
     }
-
     this.panels = this.getPanels();
 
     if (this.tabs.length !== this.panels.length) return;
 
     this.opt = Object.assign(
         {
-            activeClassName: "tabswitch--active",
+            activeClassName: "tabzy--active",
             remember: false,
             onChange: null,
         },
@@ -33,13 +30,13 @@ function TabSwitch(selector, options = {}) {
     this._init();
 }
 
-TabSwitch.prototype.getPanels = function () {
+Tabzy.prototype.getPanels = function () {
     return this.tabs
         .map((tab) => {
             const panel = document.querySelector(tab.getAttribute("href"));
             if (!panel) {
                 console.error(
-                    `TabSwitch: No panel found for selector '${tab.getAttribute(
+                    `Tabzy: No panel found for selector '${tab.getAttribute(
                         "href"
                     )}'`
                 );
@@ -49,8 +46,7 @@ TabSwitch.prototype.getPanels = function () {
         .filter(Boolean);
 };
 
-TabSwitch.prototype._init = function () {
-    // const hash = location.hash;
+Tabzy.prototype._init = function () {
     const params = new URLSearchParams(location.search);
     const tabSelector = params.get(this.paramKey);
     const tab =
@@ -64,7 +60,7 @@ TabSwitch.prototype._init = function () {
         this.tabs[0];
 
     this.currentTab = tab;
-    this._activateTab(tab, false);
+    this._activateTab(tab, false, false);
 
     this.tabs.forEach((tab) => {
         tab.onclick = (event) => {
@@ -74,14 +70,14 @@ TabSwitch.prototype._init = function () {
     });
 };
 
-TabSwitch.prototype.tryActivateTab = function (tab) {
+Tabzy.prototype._tryActivateTab = function (tab) {
     if (this.currentTab !== tab) {
-        this._activateTab(tab);
         this.currentTab = tab;
+        this._activateTab(tab);
     }
 };
 
-TabSwitch.prototype._activateTab = function (tab, triggerOnChange = true) {
+Tabzy.prototype._activateTab = function (tab, triggerOnChange = true, updateURL = this.opt.remember) {
     this.tabs.forEach((tab) => {
         tab.closest("li").classList.remove(this.opt.activeClassName);
     });
@@ -93,24 +89,24 @@ TabSwitch.prototype._activateTab = function (tab, triggerOnChange = true) {
     const panelActive = document.querySelector(tab.getAttribute("href"));
     panelActive.hidden = false;
 
-    if (this.opt.remember) {
+    if (updateURL) {
         const params = new URLSearchParams(location.search);
-        const paramValue = tab
-            .getAttribute("href")
-            .replace(this._cleanRegex, "");
-        params.set(this.paramKey, paramValue);
+        params.set(
+            this.paramKey,
+            tab.getAttribute("href").replace(this._cleanRegex, "")
+        );
         history.replaceState(null, null, `?${params}`);
     }
 
     if (triggerOnChange && typeof this.opt.onChange === "function") {
         this.opt.onChange({
-            tab: tab,
+            tab,
             panel: panelActive,
         });
     }
 };
 
-TabSwitch.prototype.switch = function (input) {
+Tabzy.prototype.switch = function (input) {
     const tab =
         typeof input === "string"
             ? this.tabs.find((tab) => tab.getAttribute("href") === input)
@@ -119,14 +115,13 @@ TabSwitch.prototype.switch = function (input) {
             : null;
 
     if (!tab) {
-        console.error(`TabSwitch: Invalid input '${input}'`);
+        console.error(`Tabzy: Invalid input '${input}'`);
         return;
     }
-
     this._tryActivateTab(tab);
 };
 
-TabSwitch.prototype.destroy = function () {
+Tabzy.prototype.destroy = function () {
     this.container.innerHTML = this._originalHTML;
     this.panels.forEach((panel) => (panel.hidden = false));
     this.container = null;
