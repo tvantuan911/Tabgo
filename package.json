@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "minify" : "terser src/tabswitch.js -o tabswitch.min.js && csso src/tabswitch.css -o tabswitch.min.css"
+    "minify": "terser src/tabgo.js -o tabgo.min.js && csso src/tabgo.css -o tabgo.min.css"
   },
   "dependencies": {
     "csso-cli": "^4.0.2",
